@@ -1,5 +1,7 @@
 # 食物卡路里辨識 · Food Calorie AI
 
+**線上版：<https://tyhcch1234.github.io/food-calorie-ai/>**
+
 上載一張食物相片，即時估算卡路里、蛋白質、碳水化合物、脂肪、膳食纖維、糖與鈉，並顯示份量。
 純靜態網頁（HTML + CSS + 原生 JS），沒有後端、沒有 build step，可直接放在 GitHub Pages。
 
