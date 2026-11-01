@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>食物卡路里辨識 · 影相即計營養</title>
+<meta name="description" content="上傳食物相片，即時估算卡路里、蛋白質、碳水、脂肪、纖維、糖與鈉，並顯示份量。">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥗</text></svg>">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="./">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" width="30" height="30" fill="none">
+        <path d="M4 15h24c0 7.2-5.4 13-12 13S4 22.2 4 15Z" fill="#dff3e6" stroke="#0f9d58" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="M16 15c0-4 2.2-7.4 6-9-1 3.6-2.7 6.6-6 9Z" fill="#37c47a"/>
+        <path d="M15 15c-3.6-1.6-5.6-4.3-6.2-7.6 3.4 1 5.8 3.8 6.2 7.6Z" fill="#0f9d58"/>
+      </svg>
+    </span>
+    <span class="brand-text">食物卡路里辨識<small>Food Calorie AI</small></span>
+  </a>
+  <nav class="topnav">
+    <button class="btn btn-ghost" id="btn-settings" type="button">
+      <span class="ico">⚙</span> 設定
+    </button>
+    <button class="btn btn-ghost" id="btn-help" type="button">
+      <span class="ico">?</span> 說明
+    </button>
+  </nav>
+</header>
+
+<main>
+  <!-- ===== Hero / 上載 ===== -->
+  <section class="hero">
+    <h1>影張相，即知卡路里</h1>
+    <p class="lede">上載食物相片，自動辨識食物種類、估算份量，計出卡路里與蛋白質、碳水、脂肪、纖維、糖、鈉。</p>
+
+    <div class="upload" id="dropzone" tabindex="0" role="button" aria-label="上載食物相片">
+      <input type="file" id="file-input" accept="image/*" hidden>
+      <input type="file" id="camera-input" accept="image/*" capture="environment" hidden>
+      <div class="upload-inner">
+        <div class="upload-icon">
+          <svg viewBox="0 0 48 48" width="46" height="46" fill="none" aria-hidden="true">
+            <rect x="5" y="13" width="38" height="27" rx="7" fill="#e8f6ee" stroke="#0f9d58" stroke-width="2.2"/>
+            <path d="M17 13.5 19.6 8h8.8l2.6 5.5" stroke="#0f9d58" stroke-width="2.2" stroke-linejoin="round"/>
+            <circle cx="24" cy="26" r="7.5" fill="#fff" stroke="#0f9d58" stroke-width="2.2"/>
+            <circle cx="24" cy="26" r="3.2" fill="#37c47a"/>
+          </svg>
+        </div>
+        <div class="upload-title">拖放相片到此，或</div>
+        <div class="upload-actions">
+          <button class="btn btn-primary" id="btn-pick" type="button">選擇相片</button>
+          <button class="btn btn-soft" id="btn-camera" type="button">拍照</button>
+        </div>
+        <div class="upload-hint">支援 JPG / PNG / WEBP · 也可直接貼上（Ctrl+V）</div>
+      </div>
+      <div class="upload-progress" id="upload-progress" hidden>
+        <div class="up-row"><span id="up-label">準備中…</span><span id="up-pct">0%</span></div>
+        <div class="bar"><i id="up-bar"></i></div>
+      </div>
+    </div>
+
+    <div class="engine-bar">
+      <label class="switch">
+        <input type="checkbox" id="use-api">
+        <span class="track"><span class="thumb"></span></span>
+        <span class="switch-text">用 Vision API 辨識（更準，需 Key）</span>
+      </label>
+      <span class="engine-note" id="engine-note">預設在瀏覽器離線辨識，相片不會上傳</span>
+    </div>
+  </section>
+
+  <!-- ===== 分析區 ===== -->
+  <section class="workspace" id="workspace" hidden>
+    <div class="col-left">
+      <div class="card photo-card">
+        <div class="photo-wrap">
+          <img id="preview" alt="已上載的食物相片">
+          <div class="photo-badge" id="photo-badge" hidden>分析中…</div>
+        </div>
+        <div class="photo-actions">
+          <button class="btn btn-soft btn-sm" id="btn-change" type="button">換相片</button>
+          <button class="btn btn-ghost btn-sm" id="btn-reanalyze" type="button">重新分析</button>
+        </div>
+        <p class="scene" id="scene" hidden></p>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>辨識結果</h2>
+          <span class="tag" id="engine-tag">離線模型</span>
+        </div>
+        <div id="candidates" class="candidates">
+          <p class="muted">未上載相片。可直接用手動搜尋加入食物。</p>
+        </div>
+        <button class="btn btn-soft btn-block" id="btn-search" type="button">＋ 手動搜尋食物</button>
+      </div>
+    </div>
+
+    <div class="col-right">
+      <div class="card meal-card">
+        <div class="card-head">
+          <h2>這餐吃了什麼</h2>
+          <button class="btn btn-ghost btn-sm" id="btn-clear" type="button">清空</button>
+        </div>
+        <ul class="meal-list" id="meal-list"></ul>
+        <p class="empty" id="meal-empty">還沒有項目。上載相片辨識，或手動搜尋加入食物。</p>
+      </div>
+
+      <div class="card total-card" id="total-card">
+        <div class="total-head">
+          <div>
+            <div class="total-kcal"><span id="total-kcal">0</span><em>kcal</em></div>
+            <div class="total-sub" id="total-sub">共 0 項 · 0 g</div>
+          </div>
+          <div class="donut" id="donut"></div>
+        </div>
+
+        <div class="macros" id="macros"></div>
+
+        <div class="micro" id="micro"></div>
+
+        <div class="target-row">
+          <label for="daily-target">每日熱量目標</label>
+          <input type="number" id="daily-target" value="2000" min="800" max="5000" step="50">
+          <span>kcal</span>
+          <div class="target-bar"><i id="target-fill"></i></div>
+          <span class="target-pct" id="target-pct">0%</span>
+        </div>
+
+        <div class="total-actions">
+          <button class="btn btn-soft btn-sm" id="btn-copy" type="button">複製營養摘要</button>
+          <button class="btn btn-ghost btn-sm" id="btn-print" type="button">列印 / 存 PDF</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="library-teaser" id="library-teaser">
+    <h2>或者，直接由資料庫加入</h2>
+    <p class="muted">130+ 項常見食物與菜式，含每 100 克營養值與常見份量。</p>
+    <div class="quick-cats" id="quick-cats"></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <p>營養數值為每 100 克參考值，實際含量隨食材、煮法與品牌而異，僅供估算參考，不用作醫療建議。</p>
+  <p class="muted small">資料庫參考 USDA FoodData Central 及香港食物安全中心常見數值 · 離線辨識由 Transformers.js（CLIP）在瀏覽器執行</p>
+</footer>
+
+<!-- ===== 食物搜尋 Modal ===== -->
+<div class="modal" id="modal-search" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="search-title">
+    <div class="modal-head">
+      <h3 id="search-title">搜尋食物</h3>
+      <button class="icon-btn" data-close type="button" aria-label="關閉">×</button>
+    </div>
+    <input class="search-input" id="search-input" type="search" placeholder="輸入食物名稱，例如：白飯、雞胸、可樂" autocomplete="off">
+    <div class="cat-chips" id="cat-chips"></div>
+    <ul class="search-results" id="search-results"></ul>
+  </div>
+</div>
+
+<!-- ===== 設定 Modal ===== -->
+<div class="modal" id="modal-settings" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="modal-head">
+      <h3 id="settings-title">Vision API 設定</h3>
+      <button class="icon-btn" data-close type="button" aria-label="關閉">×</button>
+    </div>
+    <p class="muted small">不填也可用：預設的離線模型在你的瀏覽器內完成辨識。填 API Key 可獲得更準確的多食物辨識與份量估算，相片屆時會傳送到你指定的服務商。</p>
+
+    <label class="field">
+      <span>API 網址（OpenAI 相容）</span>
+      <input type="text" id="api-base" placeholder="https://api.openai.com/v1" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>模型名稱</span>
+      <input type="text" id="api-model" placeholder="gpt-4o-mini" autocomplete="off">
+    </label>
+    <label class="field">
+      <span>API Key</span>
+      <input type="password" id="api-key" placeholder="sk-..." autocomplete="off">
+    </label>
+    <p class="muted small">Key 只儲存在你這部裝置的 localStorage，不會上傳到本網站（本網站沒有後端）。可用 OpenAI、Azure OpenAI 相容網關，或 Gemini 的 OpenAI 相容端點（https://generativelanguage.googleapis.com/v1beta/openai）。</p>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="btn-clear-key" type="button">清除</button>
+      <button class="btn btn-primary" id="btn-save-settings" type="button">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 說明 Modal ===== -->
+<div class="modal" id="modal-help" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-head">
+      <h3 id="help-title">怎麼用</h3>
+      <button class="icon-btn" data-close type="button" aria-label="關閉">×</button>
+    </div>
+    <ol class="help-list">
+      <li><b>上載相片</b>：拖放、選擇檔案、拍照或直接貼上。</li>
+      <li><b>確認食物</b>：頂部幾個候選是模型判斷，按一下即加入；不確定就按「手動搜尋食物」自己揀。</li>
+      <li><b>調整份量</b>：拉動滑桿或用碗／隻／片等常用份量，卡路里與營養素即時更新。</li>
+      <li><b>看總數</b>：右邊會累計這餐的熱量、三大營養素比例、纖維、糖與鈉，並對照每日目標。</li>
+    </ol>
+    <p class="muted small">離線模型第一次使用需下載約 150MB 權重（之後會快取），需網絡連線；API 模式則每次辨識都會發送相片到你的 API 服務商。</p>
+    <div class="modal-actions">
+      <button class="btn btn-primary" data-close type="button">明白</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/foods.js"></script>
+<script src="assets/js/nutrition.js"></script>
+<script src="assets/js/recognizer.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
