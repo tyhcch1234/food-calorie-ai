@@ -25,11 +25,17 @@ async function getClassifier(onProgress){
   _pipelinePromise = (async () => {
     const { pipeline, env } = await loadLib();
     env.allowLocalModels = false;
+    env.allowRemoteModels = true;
     env.useBrowserCache = true;
+    // 可用 ?modelHost=https://your-mirror/ 指定自架模型來源（例如內網或鏡像）
+    let host = new URLSearchParams(location.search).get('modelHost');
+    if (!host) { try { host = localStorage.getItem('foodcal.modelHost') || ''; } catch(e){} }
+    if (host) env.remoteHost = host.replace(/\/?$/, '/');
     if (env.backends?.onnx?.wasm){
-      // GitHub Pages 沒有 COOP/COEP header，單執行緒最穩定
+      // GitHub Pages 沒有 COOP/COEP header，單執行緒最穩定；
+      // proxy = true 讓推理在 Web Worker 執行，避免下載／運算時畫面凍結
       try { env.backends.onnx.wasm.numThreads = 1; } catch(e){}
-      try { env.backends.onnx.wasm.proxy = false; } catch(e){}
+      try { env.backends.onnx.wasm.proxy = true; } catch(e){}
     }
     return pipeline('zero-shot-image-classification', MODEL_ID, {
       quantized: true,
@@ -44,7 +50,10 @@ async function getClassifier(onProgress){
         }
       }
     });
-  })();
+  })().catch(err => {
+    _pipelinePromise = null;   // 失敗後允許重試（例如網絡恢復或換鏡像）
+    throw err;
+  });
   return _pipelinePromise;
 }
 

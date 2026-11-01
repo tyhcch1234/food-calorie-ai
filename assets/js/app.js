@@ -65,6 +65,7 @@
     $('#api-base').value = state.settings.baseUrl || '';
     $('#api-model').value = state.settings.model || '';
     $('#api-key').value = state.settings.apiKey || '';
+    try { $('#model-host').value = localStorage.getItem('foodcal.modelHost') || ''; } catch(e){}
     state.useApi = !!(state.settings.apiKey && state.settings.useApi);
   }
 
@@ -288,7 +289,7 @@
       <div class="notice error">
         <b>未能完成自動辨識</b>
         <p>${esc(err.message || String(err))}</p>
-        <p class="small">可改用「手動搜尋食物」；若使用離線模型，請確認網絡可連到 cdn.jsdelivr.net 與 huggingface.co。</p>
+        <p class="small">可改用「手動搜尋食物」；若使用離線模型，請確認網絡可連到 cdn.jsdelivr.net 與 huggingface.co。若所在地區無法連線 huggingface.co，可在「設定」填寫模型鏡像網址後重新載入。</p>
       </div>`;
   }
 
@@ -538,6 +539,7 @@
       $('#api-base').value = state.settings.baseUrl || '';
       $('#api-model').value = state.settings.model || '';
       $('#api-key').value = state.settings.apiKey || '';
+      try { $('#model-host').value = localStorage.getItem('foodcal.modelHost') || ''; } catch(e){}
       $('#modal-settings').hidden = false;
     });
     $('#btn-help').addEventListener('click', () => { $('#modal-help').hidden = false; });
@@ -545,6 +547,11 @@
       state.settings.baseUrl = $('#api-base').value.trim();
       state.settings.model = $('#api-model').value.trim();
       state.settings.apiKey = $('#api-key').value.trim();
+      try {
+        const host = $('#model-host').value.trim();
+        if (host) localStorage.setItem('foodcal.modelHost', host);
+        else localStorage.removeItem('foodcal.modelHost');
+      } catch(e){}
       state.useApi = !!state.settings.apiKey;
       $('#use-api').checked = state.useApi;
       saveSettings();

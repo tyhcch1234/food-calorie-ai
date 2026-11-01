@@ -43,7 +43,9 @@ python3 -m http.server 8080
 |---|---|
 | 離線辨識 | `@xenova/transformers` v2 + `Xenova/clip-vit-base-patch32`（CLIP zero-shot，quantized） |
 | 候選標籤 | 130+ 條英文提示詞（例如 `a plate of fried rice with egg and vegetables`），對應到食物資料庫 |
-| 首次載入 | 需下載約 150MB 模型權重，之後由 Browser Cache 快取 |
+| 首次載入 | 需下載約 300MB 模型權重（文字 + 視覺），之後由 Browser Cache 快取 |
+| 模型來源 | 預設 `huggingface.co`；如所在地區被阻，可在「設定 → 模型來源」填鏡像（例如 `https://hf-mirror.com/`）或自架，亦可用 `?modelHost=` 參數指定 |
+| 推理執行 | ONNX Runtime Web（wasm、單執行緒）在 Web Worker 內執行，避免主執行緒凍結 |
 | API 模式 | `POST {baseUrl}/chat/completions`，含 `image_url`，要求回傳嚴格 JSON（食物、克數、信心值） |
 | 名稱比對 | 完全相符 → 包含關係（取最長匹配）→ 中文字元重疊度 |
 | 資料儲存 | 全部在 localStorage（設定、餐點、每日目標） |
@@ -52,6 +54,7 @@ python3 -m http.server 8080
 
 - **份量只能估算**：單張相片沒有尺寸參照，預設用該食物的常見份量，請自行按實際情況調整（這是最大誤差來源）。
 - **離線模型**：CLIP zero-shot 對常見菜式／食材有一定辨識力，但混合菜式（例如碟頭飯）、遮擋、暗光會失準；信心度低時請手動確認。
+- **只能認出單一主體**：離線模型回傳一個最可能的食物（附前 5 名候選），多碟菜建議分別上載或用搜尋加入；需要一次辨識多項食物請用 Vision API 模式。
 - **營養數值**：每 100 克參考值，取自 USDA FoodData Central 與香港食物安全中心常見數據，實際含量隨食材、煮法、品牌而異。
 - 本工具只供估算與記錄，不用作醫療、營養治療或飲食處方。
 

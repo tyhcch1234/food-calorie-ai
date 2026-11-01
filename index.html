@@ -185,6 +185,10 @@
       <span>API Key</span>
       <input type="password" id="api-key" placeholder="sk-..." autocomplete="off">
     </label>
+    <label class="field">
+      <span>模型來源（可留空，預設 huggingface.co）</span>
+      <input type="text" id="model-host" placeholder="例如 https://hf-mirror.com/" autocomplete="off">
+    </label>
     <p class="muted small">Key 只儲存在你這部裝置的 localStorage，不會上傳到本網站（本網站沒有後端）。可用 OpenAI、Azure OpenAI 相容網關，或 Gemini 的 OpenAI 相容端點（https://generativelanguage.googleapis.com/v1beta/openai）。</p>
 
     <div class="modal-actions">
