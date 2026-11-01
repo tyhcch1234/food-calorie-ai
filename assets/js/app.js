@@ -109,6 +109,17 @@
     $('#btn-change').addEventListener('click', () => $('#file-input').click());
     $('#btn-reanalyze').addEventListener('click', () => { if (state.lastFile) analyze(state.lastFile); });
     $('#btn-search').addEventListener('click', () => openSearch());
+
+    $('#btn-demo').addEventListener('click', async e => {
+      e.stopPropagation();
+      try {
+        const res = await fetch('demo/sample-fried-rice.jpg');
+        const blob = await res.blob();
+        onFile(new File([blob], 'demo-fried-rice.jpg', { type: blob.type || 'image/jpeg' }));
+      } catch(err){
+        toast('示範相片載入失敗：' + err.message);
+      }
+    });
   }
 
   function showProgress(label, pct){
